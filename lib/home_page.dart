@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:noteappwithsqflige/add_note_screens.dart';
 import 'package:noteappwithsqflige/db_helper.dart';
+import 'package:noteappwithsqflige/db_provider.dart';
+import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -12,76 +15,99 @@ class _HomePageState extends State<HomePage> {
   TextEditingController _titleController = TextEditingController();
   TextEditingController _descController = TextEditingController();
 
-  List<Map<String, dynamic>> allNotes = [];
-  DBHelper? dbRef;
+  //List<Map<String, dynamic>> allNotes = [];
+  //DBHelper? dbRef;
 
   @override
   void initState() {
     super.initState();
-    dbRef = DBHelper.getInstance;
-    getNotes();
+    context.read<DBProvider>().getIntrialNotes();
   }
 
-  void getNotes() async {
-    allNotes = await dbRef!.getAllNotes();
-    setState(() {});
-  }
+
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Note App")),
 
-      body:
-          allNotes.isNotEmpty
-              ? Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: ListView.builder(
-                  itemCount: allNotes.length,
-                  itemBuilder: (_, index) {
-                    return ListTile(
-                      leading: Text(
-                        "${allNotes[index][DBHelper.COLUMN_NOTE_SNO]}",
-                      ),
-                      title: Text(allNotes[index][DBHelper.COLUMN_NOTE_TITLE]),
-                      subtitle: Text(
-                        allNotes[index][DBHelper.COLUMN_NOTE_DESC],
-                      ),
-                      trailing: SizedBox(
-                        width: 50,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            /* IconButton(onPressed: (){}, icon: Icon(Icons.edit)),
-                          SizedBox(width: 5),
-                          IconButton(onPressed: (){}, icon: Icon(Icons.delete)),*/
-                            InkWell(
-                              onTap: () {
-                                _titleController.text =
-                                    allNotes[index][DBHelper.COLUMN_NOTE_TITLE];
-                                _descController.text =
-                                    allNotes[index][DBHelper.COLUMN_NOTE_DESC];
-                                _buildBottomSheet(context, isUpdate: true, sno:allNotes[index][DBHelper.COLUMN_NOTE_SNO] );
-                              },
-                              child: Icon(Icons.edit),
-                            ),
+      body: Consumer<DBProvider>(builder: (ctx,provider,__){
 
-                            InkWell(
-                              onTap: () {
-                                dbRef!.deleteNote(sno: allNotes[index][DBHelper.COLUMN_NOTE_SNO]);
-                                getNotes();
+        List<Map<String,dynamic>> allNotes = provider.AllNotes;
 
-                              },
-                              child: Icon(Icons.delete, color: Colors.red),
-                            ),
-                          ],
+        return allNotes.isNotEmpty
+            ? Padding(
+          padding: const EdgeInsets.all(10.0),
+          child: ListView.builder(
+            itemCount: allNotes.length,
+            itemBuilder: (_, index) {
+              return Card(
+                child: ListTile(
+                  title: Text(allNotes[index][DBHelper.COLUMN_NOTE_TITLE],style: TextStyle(fontSize: 24),),
+                  subtitle: Text(
+                    allNotes[index][DBHelper.COLUMN_NOTE_DESC],
+                  ),
+                  trailing: SizedBox(
+                    width: 80,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        /* IconButton(onPressed: (){}, icon: Icon(Icons.edit)),
+                            SizedBox(width: 5),
+                            IconButton(onPressed: (){}, icon: Icon(Icons.delete)),*/
+                        Expanded(
+                          child: InkWell(
+                            onTap: () {
+
+
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder:
+                                      (context) => AddNoteScreens(
+                                      isUpdate: true,
+                                      sno:
+                                      allNotes[index][DBHelper
+                                          .COLUMN_NOTE_SNO],
+                                      title: allNotes[index][DBHelper.COLUMN_NOTE_TITLE],
+                                      desc: allNotes[index][DBHelper.COLUMN_NOTE_DESC]
+                                  ),
+                                ),
+                              );
+
+                              //_buildBottomSheet(context, isUpdate: true, sno:allNotes[index][DBHelper.COLUMN_NOTE_SNO] );
+                            },
+                            child: Icon(Icons.edit),
+                          ),
                         ),
-                      ),
-                    );
-                  },
+                        Expanded(
+                          child: InkWell(
+                            onTap: () {
+                             /* dbRef!.deleteNote(
+                                sno:
+                                allNotes[index][DBHelper.COLUMN_NOTE_SNO],
+                              );
+                              getNotes();*/
+
+                              context.read<DBProvider>().deleteNote(allNotes[index][DBHelper.COLUMN_NOTE_SNO]);
+
+                            },
+                            child: Icon(Icons.delete, color: Colors.red),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 ),
-              )
-              : Center(child: Text('No Notes yet')),
+              );
+            },
+          ),
+        )
+            : Center(child: Text('No Notes yet'));
+
+
+      }),
+          
 
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
@@ -96,13 +122,17 @@ class _HomePageState extends State<HomePage> {
             getNotes();
           }*/
 
-          _buildBottomSheet(context);
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => AddNoteScreens()),
+          );
         },
         child: Icon(Icons.add),
       ),
     );
   }
 
+  /*
   void _buildBottomSheet(
     BuildContext context, {
     bool isUpdate = false,
@@ -217,5 +247,5 @@ class _HomePageState extends State<HomePage> {
         );
       },
     );
-  }
+  }*/
 }
