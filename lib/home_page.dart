@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:noteappwithsqflige/add_note_screens.dart';
 import 'package:noteappwithsqflige/db_helper.dart';
 import 'package:noteappwithsqflige/db_provider.dart';
+import 'package:noteappwithsqflige/setting_screen.dart';
+import 'package:noteappwithsqflige/theme_provider.dart';
 import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
@@ -24,90 +26,131 @@ class _HomePageState extends State<HomePage> {
     context.read<DBProvider>().getIntrialNotes();
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Note App")),
-
-      body: Consumer<DBProvider>(builder: (ctx,provider,__){
-
-        List<Map<String,dynamic>> allNotes = provider.AllNotes;
-
-        return allNotes.isNotEmpty
-            ? Padding(
-          padding: const EdgeInsets.all(10.0),
-          child: ListView.builder(
-            itemCount: allNotes.length,
-            itemBuilder: (_, index) {
-              return Card(
-                child: ListTile(
-                  title: Text(allNotes[index][DBHelper.COLUMN_NOTE_TITLE],style: TextStyle(fontSize: 24),),
-                  subtitle: Text(
-                    allNotes[index][DBHelper.COLUMN_NOTE_DESC],
+      appBar: AppBar(
+        title: Text("Note App"),
+        actions: [
+          PopupMenuButton(
+            itemBuilder: (_) {
+              return [
+                PopupMenuItem(
+                  child: Row(
+                    children: [
+                      Icon(Icons.settings),
+                      SizedBox(width: 10),
+                      Text("Setting"),
+                    ],
                   ),
-                  trailing: SizedBox(
-                    width: 80,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        /* IconButton(onPressed: (){}, icon: Icon(Icons.edit)),
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => SettingScreen()),
+                    );
+                  },
+                ),
+              ];
+            },
+          ),
+
+          Consumer<ThemeProvider>(
+            builder: (ctx, provider, _) {
+              return Switch.adaptive(
+                value: provider.getThemeValu(),
+                onChanged: (newValu) {
+                  provider.updateTheme(value: newValu);
+                },
+              );
+            },
+          ),
+
+          SizedBox(width: 10),
+
+        ],
+      ),
+
+      body: Consumer<DBProvider>(
+        builder: (ctx, provider, __) {
+          List<Map<String, dynamic>> allNotes = provider.AllNotes;
+
+          return allNotes.isNotEmpty
+              ? Padding(
+                padding: const EdgeInsets.all(10.0),
+                child: ListView.builder(
+                  itemCount: allNotes.length,
+                  itemBuilder: (_, index) {
+                    return Card(
+                      child: ListTile(
+                        title: Text(
+                          allNotes[index][DBHelper.COLUMN_NOTE_TITLE],
+                          style: TextStyle(fontSize: 24),
+                        ),
+                        subtitle: Text(
+                          allNotes[index][DBHelper.COLUMN_NOTE_DESC],
+                        ),
+                        trailing: SizedBox(
+                          width: 80,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              /* IconButton(onPressed: (){}, icon: Icon(Icons.edit)),
                             SizedBox(width: 5),
                             IconButton(onPressed: (){}, icon: Icon(Icons.delete)),*/
-                        Expanded(
-                          child: InkWell(
-                            onTap: () {
+                              Expanded(
+                                child: InkWell(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder:
+                                            (context) => AddNoteScreens(
+                                              isUpdate: true,
+                                              sno:
+                                                  allNotes[index][DBHelper
+                                                      .COLUMN_NOTE_SNO],
+                                              title:
+                                                  allNotes[index][DBHelper
+                                                      .COLUMN_NOTE_TITLE],
+                                              desc:
+                                                  allNotes[index][DBHelper
+                                                      .COLUMN_NOTE_DESC],
+                                            ),
+                                      ),
+                                    );
 
-
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder:
-                                      (context) => AddNoteScreens(
-                                      isUpdate: true,
-                                      sno:
-                                      allNotes[index][DBHelper
-                                          .COLUMN_NOTE_SNO],
-                                      title: allNotes[index][DBHelper.COLUMN_NOTE_TITLE],
-                                      desc: allNotes[index][DBHelper.COLUMN_NOTE_DESC]
-                                  ),
+                                    //_buildBottomSheet(context, isUpdate: true, sno:allNotes[index][DBHelper.COLUMN_NOTE_SNO] );
+                                  },
+                                  child: Icon(Icons.edit),
                                 ),
-                              );
-
-                              //_buildBottomSheet(context, isUpdate: true, sno:allNotes[index][DBHelper.COLUMN_NOTE_SNO] );
-                            },
-                            child: Icon(Icons.edit),
-                          ),
-                        ),
-                        Expanded(
-                          child: InkWell(
-                            onTap: () {
-                             /* dbRef!.deleteNote(
+                              ),
+                              Expanded(
+                                child: InkWell(
+                                  onTap: () {
+                                    /* dbRef!.deleteNote(
                                 sno:
                                 allNotes[index][DBHelper.COLUMN_NOTE_SNO],
                               );
                               getNotes();*/
 
-                              context.read<DBProvider>().deleteNote(allNotes[index][DBHelper.COLUMN_NOTE_SNO]);
-
-                            },
-                            child: Icon(Icons.delete, color: Colors.red),
+                                    context.read<DBProvider>().deleteNote(
+                                      allNotes[index][DBHelper.COLUMN_NOTE_SNO],
+                                    );
+                                  },
+                                  child: Icon(Icons.delete, color: Colors.red),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                      ],
-                    ),
-                  ),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
-        )
-            : Center(child: Text('No Notes yet'));
-
-
-      }),
-          
+              )
+              : Center(child: Text('No Notes yet'));
+        },
+      ),
 
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
